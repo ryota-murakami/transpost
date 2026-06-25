@@ -1,0 +1,17 @@
+node_modules
+output
+.wxt
+stats.html
+*.log
+
+# harness 管理ディレクトリ（プロジェクト成果物ではない）
+logs/
+
+# playwright-cli の永続プロファイル（cookie/セッションを含むため絶対にコミットしない）
+.playwright-cli/
+
+# ローカル環境
+.DS_Store
+.env
+.env.*
+.harness/

@@ -1,0 +1,189 @@
+/* 設定ページのスタイル。OS ダークモードに追従。フォーム要素は読みやすさ優先のシンプル構成。 */
+
+:root {
+  --bg: #f7f9f9;
+  --panel: #ffffff;
+  --fg: #0f1419;
+  --muted: #536471;
+  --border: #e1e8ed;
+  --input-bg: #ffffff;
+  --accent: #1d9bf0;
+  --accent-fg: #ffffff;
+  --ok: #00a86b;
+  --error: #d93025;
+  --code-bg: #eef3f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15202b;
+    --panel: #1b2733;
+    --fg: #f7f9f9;
+    --muted: #8b98a5;
+    --border: #38444d;
+    --input-bg: #15202b;
+    --accent: #1d9bf0;
+    --accent-fg: #ffffff;
+    --ok: #2ecc8f;
+    --error: #f4756b;
+    --code-bg: #243340;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+/* ── ヘッダ ─────────────────────────── */
+.head {
+  margin-bottom: 28px;
+}
+.title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+}
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ── フォーム ─────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.field {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.label-row .label {
+  margin-bottom: 0;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--fg);
+  font-size: 14px;
+  font-family: inherit;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.25);
+}
+.select {
+  cursor: pointer;
+}
+.textarea {
+  resize: vertical;
+  min-height: 220px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, 'Hiragino Sans', 'Noto Sans JP', monospace;
+}
+
+.key-row {
+  display: flex;
+  gap: 8px;
+}
+.key-row .input {
+  flex: 1 1 auto;
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.hint code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 11.5px;
+}
+.hint a {
+  color: var(--accent);
+}
+
+/* ── ボタン ─────────────────────────── */
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--panel);
+  color: var(--fg);
+  font-family: inherit;
+  transition: background 120ms ease, filter 120ms ease, transform 80ms ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
+.btn-ghost {
+  padding: 6px 12px;
+}
+.btn-ghost:hover {
+  background: var(--code-bg);
+}
+
+/* ── アクション行 ─────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.status {
+  font-weight: 700;
+}
+.status[data-kind='ok'] {
+  color: var(--ok);
+}
+.status[data-kind='error'] {
+  color: var(--error);
+}

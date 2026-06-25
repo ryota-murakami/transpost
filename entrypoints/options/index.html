@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>transpost 設定</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="head">
+        <h1 class="title">transpost 設定</h1>
+        <p class="subtitle">X の投稿欄の日本語を、英訳＋【解説】にして右側パネルに表示します。</p>
+      </header>
+
+      <form id="settings-form" class="form" autocomplete="off">
+        <!-- API キー -->
+        <section class="field">
+          <label class="label" for="api-key">OpenAI API キー</label>
+          <div class="key-row">
+            <input
+              id="api-key"
+              name="apiKey"
+              type="password"
+              class="input"
+              placeholder="sk-..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="toggle-key" type="button" class="btn btn-ghost" aria-pressed="false">
+              表示
+            </button>
+          </div>
+          <p class="hint">
+            この端末の拡張ストレージ（<code>storage.local</code>）にのみ保存され、外部には送信されません（OpenAI への翻訳リクエストを除く）。
+            キーは <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer noopener">platform.openai.com/api-keys</a> で発行できます。
+          </p>
+        </section>
+
+        <!-- モデル -->
+        <section class="field">
+          <label class="label" for="model">モデル</label>
+          <select id="model" name="model" class="input select"></select>
+          <p class="hint">既定は <code>gpt-5.4</code>。精度重視なら <code>gpt-5.5</code>、速度/コスト重視なら <code>gpt-5.4-mini</code>。</p>
+        </section>
+
+        <!-- 推論強度 -->
+        <section class="field">
+          <label class="label" for="effort">推論強度（reasoning_effort）</label>
+          <select id="effort" name="effort" class="input select"></select>
+          <p class="hint">高いほど丁寧な解説になりやすい一方、応答が遅く・高コストになります。既定は <code>low</code>。</p>
+        </section>
+
+        <!-- システムプロンプト -->
+        <section class="field">
+          <div class="label-row">
+            <label class="label" for="system-prompt">システムプロンプト</label>
+            <button id="reset-prompt" type="button" class="btn btn-ghost">既定に戻す</button>
+          </div>
+          <textarea id="system-prompt" name="systemPrompt" class="input textarea" rows="14" spellcheck="false"></textarea>
+          <p class="hint">翻訳・解説の方針を指示する文章です。空にすると保存時に既定値へ戻ります。</p>
+        </section>
+
+        <div class="actions">
+          <button id="save" type="submit" class="btn btn-primary">保存</button>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </main>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>
