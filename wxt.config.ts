@@ -14,8 +14,22 @@ export default defineConfig({
     permissions: ['storage', 'activeTab'],
     // OpenAI API への背景fetchを許可（これが無いと service worker の fetch が CORS で失敗）。
     host_permissions: ['https://api.openai.com/*'],
+    // 拡張一覧とツールバーの両方に、public 配下の生成済みアイコンを明示的に反映する。
+    icons: {
+      16: '/icon-16.png',
+      32: '/icon-32.png',
+      48: '/icon-48.png',
+      128: '/icon-128.png',
+    },
     // default_popup を置かない＝ツールバーアイコンのクリックで action.onClicked が発火する。
-    action: {},
+    action: {
+      default_icon: {
+        16: '/icon-16.png',
+        32: '/icon-32.png',
+        48: '/icon-48.png',
+        128: '/icon-128.png',
+      },
+    },
     // カスタムショートカット。chrome://extensions/shortcuts で再割当可能。
     commands: {
       'translate-post': {
