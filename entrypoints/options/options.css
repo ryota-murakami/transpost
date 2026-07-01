@@ -90,6 +90,9 @@ body {
 .label-row .label {
   margin-bottom: 0;
 }
+.label-spaced {
+  margin-top: 16px;
+}
 
 .input {
   width: 100%;
@@ -124,6 +127,18 @@ body {
 }
 .key-row .input {
   flex: 1 1 auto;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
 }
 
 .hint {

@@ -12,8 +12,14 @@ export default defineConfig({
       'X(Twitter)の日本語下書きを英訳＋日本語解説して右側パネルに表示（英語学習用）',
     // storage: 設定(APIキー/モデル/プロンプト)保存。activeTab: トリガー時にアクティブタブへ送信。
     permissions: ['storage', 'activeTab'],
-    // OpenAI API への背景fetchを許可（これが無いと service worker の fetch が CORS で失敗）。
-    host_permissions: ['https://api.openai.com/*'],
+    // OpenAI API と Obsidian Local REST API への background fetch を許可。
+    host_permissions: [
+      'https://api.openai.com/*',
+      'http://127.0.0.1/*',
+      'http://localhost/*',
+      'https://127.0.0.1/*',
+      'https://localhost/*',
+    ],
     // 拡張一覧とツールバーの両方に、public 配下の生成済みアイコンを明示的に反映する。
     icons: {
       16: '/icon-16.png',

@@ -16,6 +16,32 @@ export type TranslateResponse =
   | { ok: true; content: string }
   | { ok: false; error: TranslateErrorKind; message: string };
 
+/** Obsidian保存失敗の分類。content/optionsのtoastや接続テスト表示に使う。 */
+export type ObsidianErrorKind =
+  | 'DISABLED'
+  | 'NO_API_KEY'
+  | 'BAD_URL'
+  | 'UNAUTHORIZED'
+  | 'HTTP'
+  | 'NETWORK'
+  | 'UNKNOWN';
+
+/** 投稿後にObsidianへ保存する1投稿分の翻訳学習ノート内容。 */
+export interface ObsidianNotePayload {
+  original: string;
+  english: string;
+  postedText: string;
+  kaisetsu: string[];
+  pageUrl: string;
+  translatedAtIso: string;
+  postedAtIso: string;
+}
+
+/** Obsidian API 操作の結果。background が content/options へ返す。 */
+export type ObsidianResponse =
+  | { ok: true; path: string }
+  | { ok: false; error: ObsidianErrorKind; message: string };
+
 /** background → content（トリガー）。ツールバークリック/ショートカット由来。 */
 export interface TriggerMessage {
   type: 'TRIGGER';
@@ -32,7 +58,20 @@ export interface OpenOptionsMessage {
   type: 'OPEN_OPTIONS';
 }
 
+/** content → background。投稿成功後の翻訳ノート保存依頼。 */
+export interface SaveObsidianNoteMessage {
+  type: 'SAVE_OBSIDIAN_NOTE';
+  note: ObsidianNotePayload;
+}
+
+/** options → background。Obsidian Local REST API の疎通確認依頼。 */
+export interface TestObsidianConnectionMessage {
+  type: 'TEST_OBSIDIAN_CONNECTION';
+}
+
 export type RuntimeMessage =
   | TriggerMessage
   | TranslateMessage
-  | OpenOptionsMessage;
+  | OpenOptionsMessage
+  | SaveObsidianNoteMessage
+  | TestObsidianConnectionMessage;

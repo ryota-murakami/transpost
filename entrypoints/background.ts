@@ -7,7 +7,16 @@
 
 import { loadSettings } from '@/lib/storage';
 import { translate } from '@/lib/openai';
-import type { RuntimeMessage, TranslateResponse } from '@/lib/messages';
+import {
+  RELOAD_BADGE_CLEAR_DELAY_MS,
+} from '@/lib/constants';
+import { saveObsidianNote, testObsidianConnection } from '@/lib/obsidian';
+import type {
+  ObsidianNotePayload,
+  ObsidianResponse,
+  RuntimeMessage,
+  TranslateResponse,
+} from '@/lib/messages';
 
 export default defineBackground(() => {
   /** アクティブタブへトリガー送信。未注入タブ(拡張ロード前から開いていた等)では reject するので拾う。 */
@@ -27,7 +36,10 @@ export default defineBackground(() => {
       title: 'transpost: このタブを再読み込みしてください（拡張を更新した直後はコンテンツが未注入です）',
     });
     // 数秒後にバッジを消す。
-    setTimeout(() => browser.action.setBadgeText({ tabId, text: '' }), 6000);
+    setTimeout(
+      () => browser.action.setBadgeText({ tabId, text: '' }),
+      RELOAD_BADGE_CLEAR_DELAY_MS,
+    );
   }
 
   // ツールバーアイコンのクリック（default_popup が無いので発火する）。
@@ -45,6 +57,16 @@ export default defineBackground(() => {
       handleTranslate(message.text).then(sendResponse);
       return true;
     }
+    if (message.type === 'SAVE_OBSIDIAN_NOTE') {
+      // Obsidian保存は投稿後の副作用なので、失敗してもcontent側でtoastするだけにする。
+      handleSaveObsidianNote(message.note).then(sendResponse);
+      return true;
+    }
+    if (message.type === 'TEST_OBSIDIAN_CONNECTION') {
+      // optionsページの接続テスト。保存せず、Vault root のlistで認証と疎通を確認する。
+      handleTestObsidianConnection().then(sendResponse);
+      return true;
+    }
     if (message.type === 'OPEN_OPTIONS') {
       browser.runtime.openOptionsPage();
       return false;
@@ -56,5 +78,30 @@ export default defineBackground(() => {
   async function handleTranslate(text: string): Promise<TranslateResponse> {
     const settings = await loadSettings();
     return translate(settings, text);
+  }
+
+  /**
+   * 設定を読み出してObsidianへ保存し、content scriptの投稿成功検知から呼ばれる。
+   * @param note - 投稿済みの翻訳ノート内容。
+   * @returns Obsidian保存の成功pathまたは分類済みエラー。
+   * @example
+   * await handleSaveObsidianNote(note) // => { ok: true, path: 'transpost-2026-07-01-120000-post.md' }
+   */
+  async function handleSaveObsidianNote(
+    note: ObsidianNotePayload,
+  ): Promise<ObsidianResponse> {
+    const settings = await loadSettings();
+    return saveObsidianNote(settings, note);
+  }
+
+  /**
+   * Obsidian Local REST APIの疎通を確認し、optionsページのテストボタンから呼ばれる。
+   * @returns 接続成功、またはAPI key/URL/ネットワークの分類済みエラー。
+   * @example
+   * await handleTestObsidianConnection() // => { ok: true, path: '' }
+   */
+  async function handleTestObsidianConnection(): Promise<ObsidianResponse> {
+    const settings = await loadSettings();
+    return testObsidianConnection(settings);
   }
 });
