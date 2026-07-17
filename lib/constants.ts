@@ -16,3 +16,11 @@ export const DATE_PART_PAD_LENGTH = 2;
 export const SETTINGS_STATUS_CLEAR_DELAY_MS = 2600;
 /** content script 未注入ヒントのバッジを消すまでの時間。 */
 export const RELOAD_BADGE_CLEAR_DELAY_MS = 6000;
+/** Number of particles in the full-screen reward after the translated guide is typed exactly. */
+export const TYPING_CONFETTI_PARTICLE_COUNT = 120;
+/** Horizontal spread of the typing-completion burst in degrees. */
+export const TYPING_CONFETTI_SPREAD_DEGREES = 100;
+/** Initial particle velocity for a celebratory burst that clears the viewport quickly. */
+export const TYPING_CONFETTI_START_VELOCITY = 45;
+/** Vertical viewport origin for the typing-completion burst. */
+export const TYPING_CONFETTI_ORIGIN_Y_RATIO = 0.65;

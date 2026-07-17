@@ -19,11 +19,13 @@
   --tp-shadow: rgba(0, 0, 0, 0.16);
   --tp-skeleton: #e7ecf0;
   --tp-skeleton-shine: #f4f7f9;
+  --tp-completed: #8b98a5;
 
   /* レイアウト定数 */
   --tp-width: 380px;
   --tp-radius: 14px;
   --tp-z: 2147483646; /* X のモーダルより上 */
+  --tp-confetti-z: 2147483647;
 
   all: initial; /* x.com からの継承を遮断（host 要素レベル） */
 }
@@ -47,7 +49,18 @@
     --tp-shadow: rgba(0, 0, 0, 0.5);
     --tp-skeleton: #243340;
     --tp-skeleton-shine: #2d3e4c;
+    --tp-completed: #657786;
   }
+}
+
+/* Completion reward stays above X and the panel without intercepting any page interaction. */
+.tp-confetti {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: var(--tp-confetti-z);
 }
 
 /* ── パネル本体（右レール） ─────────────────────────── */
@@ -174,6 +187,12 @@
 .tp-english .tp-text {
   font-size: 16px;
   font-weight: 500;
+}
+.tp-english-completed {
+  color: var(--tp-completed);
+}
+.tp-english-remaining {
+  color: var(--tp-fg);
 }
 
 /* あなたの日本語（安全網） */

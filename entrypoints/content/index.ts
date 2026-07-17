@@ -7,6 +7,7 @@
 import './panel.css';
 import { mountPanel, type PanelHandle, type PanelState } from './panel';
 import { activeComposer, readComposerText, isComposerEmpty, clearComposer } from './composer';
+import { createTypingPractice } from './typingPractice';
 import {
   POST_CLICK_SETTLE_DELAY_MS,
   POST_SUCCESS_POLL_INTERVAL_MS,
@@ -33,13 +34,25 @@ interface PendingObsidianNote {
 export default defineContentScript({
   matches: ['https://x.com/*', 'https://twitter.com/*'],
   cssInjectionMode: 'ui', // CSS を shadow root 内のみへ注入（ページへ漏らさない）
+  /**
+   * Mounts the panel and document listeners when WXT injects this content script into X.
+   * @param ctx - WXT lifecycle context used to create and invalidate the Shadow DOM UI.
+   * @returns Promise that resolves after the UI and runtime listeners are ready.
+   * @example
+   * await contentScript.main(ctx) // => transpost is ready on x.com
+   */
   async main(ctx) {
     let panel: PanelHandle | null = null;
+    const typingPractice = createTypingPractice({
+      onProgress: (matchedCharacterCount) => panel?.updateTypingProgress(matchedCharacterCount),
+      onComplete: () => panel?.celebrate(),
+    });
 
     // 直近の翻訳対象。再試行(retry)で同じ原文を使い、成功時に同じ投稿欄をクリアするため保持。
     let lastOriginal = '';
     let lastComposer: HTMLElement | null = null;
     let pendingObsidianNote: PendingObsidianNote | null = null;
+    let latestTranslationRequestId = 0;
 
     const ui = await createShadowRootUi(ctx, {
       name: 'transpost-ui',
@@ -48,7 +61,7 @@ export default defineContentScript({
       append: 'last',
       onMount: (container) => {
         const handle = mountPanel(container, {
-          onClose: () => handle.hide(),
+          onClose: closePanel,
           onCopy: (text) => void copyToClipboard(text),
           onRetry: () => void retry(),
           onOpenSettings: () => void browser.runtime.sendMessage({ type: 'OPEN_OPTIONS' }),
@@ -61,12 +74,27 @@ export default defineContentScript({
 
     // Xの投稿クリックを止めずに観測し、成功後だけObsidian保存を走らせる。
     document.addEventListener('click', (event) => void onDocumentClick(event), true);
+    // Delegated input survives Draft.js rerenders and also covers paste, deletion, and replacement edits.
+    document.addEventListener('input', typingPractice.handleInput, true);
 
     // background からのトリガー受信。応答不要なので false を返す。
     browser.runtime.onMessage.addListener((message: RuntimeMessage) => {
       if (message.type === 'TRIGGER') void onTrigger();
       return false;
     });
+
+    /**
+     * Closes the visible guide and ends its input session; the panel close button calls it explicitly.
+     * @returns Nothing.
+     * @example
+     * closePanel() // => hidden panel input can no longer trigger progress or confetti
+     */
+    function closePanel(): void {
+      // Advancing the generation prevents an in-flight response from reviving a guide the user closed.
+      latestTranslationRequestId += 1;
+      typingPractice.reset();
+      panel?.hide();
+    }
 
     /** トリガー本体: アクティブな投稿欄を特定し、空でなければ翻訳フローへ。 */
     async function onTrigger(): Promise<void> {
@@ -83,22 +111,27 @@ export default defineContentScript({
       const text = readComposerText(composer);
       lastOriginal = text;
       lastComposer = composer;
-      await translate(text);
+      await translate(text, composer);
     }
 
     /** 再試行: 直近の原文で再翻訳（エラー時は投稿欄を保全しているので原文は残っている）。 */
     async function retry(): Promise<void> {
       if (!lastOriginal) return;
-      await translate(lastOriginal);
+      await translate(lastOriginal, lastComposer);
     }
 
     /**
-     * 翻訳の実行とパネル描画。
-     * 成功時のみ投稿欄をクリア（タイピング学習の準備）。失敗時は日本語を保全。
-     * @param text 翻訳対象の日本語
+     * Translates one captured composer and prepares its typing session; trigger and retry flows call it for each attempt.
+     * @param text - Japanese source text sent to the background translator.
+     * @param sourceComposer - Exact composer captured with this request, avoiding cross-composer response races.
+     * @returns Promise that resolves after the latest response is rendered or a stale response is discarded.
+     * @example
+     * await translate('こんにちは', composer) // => clears that composer and shows its English guide
      */
-    async function translate(text: string): Promise<void> {
+    async function translate(text: string, sourceComposer: HTMLElement | null): Promise<void> {
       if (!panel) return;
+      const translationRequestId = ++latestTranslationRequestId;
+      typingPractice.reset();
       panel.render({ status: 'loading', original: text });
       panel.show();
 
@@ -109,6 +142,8 @@ export default defineContentScript({
           text,
         })) as TranslateResponse;
       } catch {
+        // A newer request already owns the panel, so an older network failure must stay invisible.
+        if (translationRequestId !== latestTranslationRequestId) return;
         // background が応答しない（SW 落ち/拡張更新直後など）。
         panel.render({
           status: 'error',
@@ -118,20 +153,35 @@ export default defineContentScript({
         return;
       }
 
+      // A later trigger owns the panel, so an older response must not overwrite its guide or composer.
+      if (translationRequestId !== latestTranslationRequestId) return;
+
       if (response.ok) {
         const { english, kaisetsu } = parseResult(response.content);
         const state: PanelState = { status: 'success', original: text, english, kaisetsu };
+        // Finish clearing before revealing the guide so immediate user typing cannot be erased afterward.
+        const didClearComposer = await clearComposerForSuccess(sourceComposer);
+        // If another request started during the clear, it now owns the loading panel and composer.
+        if (translationRequestId !== latestTranslationRequestId) return;
+
         pendingObsidianNote = {
           original: text,
           english,
           kaisetsu,
           translatedAtIso: new Date().toISOString(),
-          composer: lastComposer,
+          composer: sourceComposer,
           saved: false,
           saving: false,
         };
         panel.render(state);
-        void clearComposerForSuccess();
+        // Only the composer captured for this translation may advance its displayed English guide.
+        if (sourceComposer?.isConnected) {
+          typingPractice.start(english, sourceComposer);
+          // Manual clearing remains a recovery path when an X editor change defeats the automatic bridge.
+          if (!didClearComposer) {
+            panel.toast('投稿欄を空にできませんでした。手動で消してから英語を入力してください');
+          }
+        }
       } else {
         panel.render({ status: 'error', kind: response.error, message: response.message });
       }
@@ -277,11 +327,20 @@ export default defineContentScript({
       return new Promise((resolve) => setTimeout(resolve, milliseconds));
     }
 
-    /** 成功後の投稿欄クリア。保持していた要素が生きていればそれを、無ければ現在のアクティブ欄を消す。 */
-    async function clearComposerForSuccess(): Promise<void> {
-      const target =
-        lastComposer && lastComposer.isConnected ? lastComposer : activeComposer();
-      if (target) await clearComposer(target);
+    /**
+     * Clears only the composer captured by a successful request; translate calls it before enabling typing practice.
+     * @param sourceComposer - Composer paired with the translation request.
+     * @returns Promise resolving true when the composer is empty, otherwise false for manual recovery.
+     * @example
+     * await clearComposerForSuccess(composer) // => composer is ready for the English guide
+     */
+    async function clearComposerForSuccess(
+      sourceComposer: HTMLElement | null,
+    ): Promise<boolean> {
+      // Never fall back to another active composer because the user may have opened a different draft meanwhile.
+      if (!sourceComposer?.isConnected) return false;
+      await clearComposer(sourceComposer);
+      return isComposerEmpty(sourceComposer);
     }
 
     /** クリップボードへコピー。navigator.clipboard が使えない場合は execCommand にフォールバック。 */
