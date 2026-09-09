@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 const confettiMocks = vi.hoisted(() => {
   const reset = vi.fn();
@@ -24,7 +24,7 @@ describe('translation panel typing feedback', () => {
     vi.clearAllMocks();
   });
 
-  it('grays the correctly typed English prefix while keeping the remaining guide visible', () => {
+  test('grays the correctly typed English prefix while keeping the remaining guide visible', () => {
     // Arrange
     const container = document.createElement('div');
     document.body.append(container);
@@ -46,7 +46,7 @@ describe('translation panel typing feedback', () => {
     expect(remainingText?.textContent).toBe('lo');
   });
 
-  it('fires an accessible full-screen confetti burst from the persistent panel canvas', () => {
+  test('fires an accessible full-screen confetti burst from the persistent panel canvas', () => {
     // Arrange
     const container = document.createElement('div');
     document.body.append(container);

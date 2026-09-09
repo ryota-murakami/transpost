@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createTypingPractice } from './typingPractice';
 
 describe('typing practice', () => {
@@ -8,7 +8,7 @@ describe('typing practice', () => {
     document.body.replaceChildren();
   });
 
-  it('keeps the English guide gray only through the last correct character after a typo', () => {
+  test('keeps the English guide gray only through the last correct character after a typo', () => {
     // Arrange
     const composer = document.createElement('div');
     composer.contentEditable = 'true';
@@ -28,7 +28,7 @@ describe('typing practice', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('returns deleted characters to the untyped guide while the user corrects the draft', () => {
+  test('returns deleted characters to the untyped guide while the user corrects the draft', () => {
     // Arrange
     const composer = document.createElement('div');
     composer.contentEditable = 'true';
@@ -50,7 +50,7 @@ describe('typing practice', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('stops hidden guide feedback after the panel closes its typing session', () => {
+  test('stops hidden guide feedback after the panel closes its typing session', () => {
     // Arrange
     const composer = document.createElement('div');
     composer.contentEditable = 'true';
@@ -71,7 +71,7 @@ describe('typing practice', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('celebrates an exact translation once until the next translation starts', () => {
+  test('celebrates an exact translation once until the next translation starts', () => {
     // Arrange
     const composer = document.createElement('div');
     composer.contentEditable = 'true';
@@ -105,7 +105,7 @@ describe('typing practice', () => {
     expect(onComplete).toHaveBeenCalledTimes(2);
   });
 
-  it('accepts keyboard quotes and spaces for typographic characters in the translated guide', () => {
+  test('accepts keyboard quotes and spaces for typographic characters in the translated guide', () => {
     // Arrange
     const composer = document.createElement('div');
     composer.contentEditable = 'true';
