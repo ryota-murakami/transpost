@@ -16,10 +16,10 @@
   },
   "devDependencies": {
     "@types/canvas-confetti": "1.9.0",
-    "happy-dom": "^20.10.6",
-    "typescript": "5.9.3",
-    "vitest": "4.1.6",
-    "wxt": "0.20.26"
+    "happy-dom": "21.0.4",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1",
+    "wxt": "0.21.5"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4"
